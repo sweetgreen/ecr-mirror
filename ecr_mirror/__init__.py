@@ -149,6 +149,7 @@ def copy_image(source_image, dest_image, token, sleep_time):
         f"docker://{source_image}",
         f"docker://{dest_image}",
         "--override-os=linux",
+        "--override-arch=amd64",
     ]
     args_with_creds = args + [f"--dest-creds={token}"]
     try:
