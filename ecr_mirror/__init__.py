@@ -145,6 +145,7 @@ def copy_image(source_image, dest_image, token, sleep_time):
     )
     args = [
         "skopeo",
+        "--insecure-policy",
         "copy",
         f"docker://{source_image}",
         f"docker://{dest_image}",
