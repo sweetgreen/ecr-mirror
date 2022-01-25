@@ -1,5 +1,7 @@
 # Docker ECR Mirror
 
+> **WARNING** This repo is used by [sweetgreen/docker-public-image-sync](https://github.com/sweetgreen/docker-public-image-sync) Do Not Delete!  
+
 ![](https://img.shields.io/pypi/v/ecr-mirror.svg)
 ![](https://img.shields.io/pypi/l/ecr-mirror.svg)
 ![](https://img.shields.io/pypi/pyversions/ecr-mirror.svg)
