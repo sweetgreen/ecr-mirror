@@ -124,15 +124,26 @@ def copy_repositories(
     click.echo(f"Beginning the copy of {len(items)} images")
 
     with ThreadPoolExecutor(max_workers=4) as pool:
-        # This code aint' beautiful, but whatever 🤷‍
-        pool.map(
-            lambda item: copy_image(
-                f"{item[0].upstream_image}:{item[1]}",
-                f"{item[0].repository_uri}:{item[1]}",
-                token,
-                sleep_time=1,
-            ),
-            items,
+        results = list(
+            pool.map(
+                lambda item: copy_image(
+                    f"{item[0].upstream_image}:{item[1]}",
+                    f"{item[0].repository_uri}:{item[1]}",
+                    token,
+                    sleep_time=1,
+                ),
+                items,
+            )
+        )
+
+    failed = [
+        f"{repo.upstream_image}:{tag}"
+        for (repo, tag), ok in zip(items, results)
+        if not ok
+    ]
+    if failed:
+        raise click.ClickException(
+            f"{len(failed)} of {len(items)} images failed to copy: {', '.join(failed)}"
         )
 
 
@@ -149,17 +160,21 @@ def copy_image(source_image, dest_image, token, sleep_time):
         "copy",
         f"docker://{source_image}",
         f"docker://{dest_image}",
-        "--override-os=linux",
-        "--override-arch=amd64",
+        # Copy every platform in a multi-arch image (amd64 and arm64), so arm64
+        # hosts can pull the mirror and digests match upstream.
+        "--all",
     ]
     args_with_creds = args + [f"--dest-creds={token}"]
     try:
-        subprocess.check_output(args_with_creds)
+        subprocess.check_output(args_with_creds, stderr=subprocess.STDOUT)
+        ok = True
     except subprocess.CalledProcessError as e:
         click.secho(f'{" ".join(args)} raised an error: {e.returncode}', fg="red")
-        click.secho(f"Last output: {e.output[100:]}", fg="red")
+        click.secho(f"Last output: {e.output[-500:]}", fg="red")
+        ok = False
 
     time.sleep(sleep_time)
+    return ok
 
 
 def find_tags_to_copy(image_name, tag_patterns):
